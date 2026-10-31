@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  minio:
+    image: bitnamilegacy/minio:latest
+    container_name: minio
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  pg-primary:
+    image: bitnamilegacy/postgresql:16
+    container_name: pg-primary
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=${REPL_USER}
+      - POSTGRESQL_REPLICATION_PASSWORD=${POSTGRES_REPL_PASSWORD}
+      - POSTGRESQL_USERNAME=${POSTGRES_USER}
+      - POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRESQL_DATABASE=shop_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - wal_archive:/var/lib/postgresql/wal_archive
+      - backup_store:/var/lib/postgresql/backups
+
+  pg-replica:
+    image: bitnamilegacy/postgresql:16
+    container_name: pg-replica
+    depends_on:
+      - pg-primary
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_REPLICATION_USER=${REPL_USER}
+      - POSTGRESQL_REPLICATION_PASSWORD=${POSTGRES_REPL_PASSWORD}
+      - POSTGRESQL_MASTER_HOST=pg-primary
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "5433:5432"
+
+  pg-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    container_name: pg-exporter
+    depends_on:
+      - pg-primary
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg-primary:5432/shop_db?sslmode=disable"
+    ports:
+      - "9187:9187"
+
+volumes:
+  wal_archive:
+  backup_store:
