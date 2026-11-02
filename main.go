@@ -128,7 +128,7 @@ func main() {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
+		c.IndentedJSON(http.StatusOK, gin.H{
 			"message":       "Ghi tải dữ liệu vào pg-primary (Port 5432) thành công!",
 			"inserted_rows": totalInsert,
 			"duration_ms":   time.Since(start).Milliseconds(),
@@ -160,7 +160,7 @@ func main() {
 		_ = dbPrimary.QueryRow("SELECT COUNT(*) FROM demo_orders;").Scan(&primaryCount)
 		_ = dbReplica.QueryRow("SELECT COUNT(*) FROM demo_orders;").Scan(&replicaCount)
 
-		c.JSON(http.StatusOK, gin.H{
+		c.IndentedJSON(http.StatusOK, gin.H{
 			"replication_state":     state,
 			"sync_mode":             syncState,
 			"replica_ip":            clientAddr,
