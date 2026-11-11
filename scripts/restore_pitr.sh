@@ -38,7 +38,7 @@ docker compose up -d --wait etcd
 
 echo "[3/6] Restore bằng pgBackRest vào volume node 1 (Patroni đang tắt)..."
 RESTORE_START=$(date +%s)
-docker compose run --rm --no-deps -e PGBACKREST_REPO1_STORAGE_VERIFY_TLS=n -T --entrypoint bash pg-patroni-1 \
+docker compose run --rm --no-deps -e TZ=Asia/Ho_Chi_Minh -e PGBACKREST_REPO1_STORAGE_VERIFY_TLS=n -T --entrypoint bash pg-patroni-1 \
   -c "tr -d '\r' < /scripts/pitr_inside.sh | bash -s -- '$MODE' '$TARGET'" | tee "$LOG_DIR/pitr_restore.log"
 RESTORE_END=$(date +%s)
 
@@ -56,12 +56,13 @@ until docker exec pg-patroni-1 patronictl -c /tmp/patroni.yml list 2>/dev/null |
 done
 echo ""
 echo "    -> Patroni Node 1 đã lên Leader thành công!"
+docker exec -u 0 pg-patroni-1 ln -sf /usr/share/zoneinfo/Asia/Ho_Chi_Minh /etc/localtime 2>/dev/null || true
 docker exec pg-patroni-1 bash -c "mkdir -p /etc/pgbackrest/conf.d && printf '[global]\nrepo1-storage-verify-tls=n\n' > /etc/pgbackrest/conf.d/tls.conf" 2>/dev/null || true
 
 echo "[5/6] Khởi động node 2 (clone lại từ node 1) và HAProxy..."
 docker compose up -d pg-patroni-2 haproxy
 TRY=0
-until docker exec pg-patroni-2 patronictl -c /tmp/patroni.yml list 2>/dev/null | grep pg-patroni-2 | grep -q "running"; do
+until docker exec pg-patroni-2 patronictl -c /tmp/patroni.yml list 2>/dev/null | grep pg-patroni-2 | grep -qE "running|streaming"; do
   TRY=$((TRY + 1))
   if [ $TRY -gt 30 ]; then
     echo ""
@@ -73,11 +74,13 @@ until docker exec pg-patroni-2 patronictl -c /tmp/patroni.yml list 2>/dev/null |
 done
 echo ""
 echo "    -> Node 2 và HAProxy đã sẵn sàng!"
+docker exec -u 0 pg-patroni-2 ln -sf /usr/share/zoneinfo/Asia/Ho_Chi_Minh /etc/localtime 2>/dev/null || true
 docker exec pg-patroni-2 bash -c "mkdir -p /etc/pgbackrest/conf.d && printf '[global]\nrepo1-storage-verify-tls=n\n' > /etc/pgbackrest/conf.d/tls.conf" 2>/dev/null || true
 
 echo "[6/6] Tạo Full backup mới trên timeline mới sau phục hồi..."
 echo "    -> Đang tiến hành pgBackRest full backup..."
-docker exec -e PGBACKREST_REPO1_STORAGE_VERIFY_TLS=n pg-patroni-1 pgbackrest --stanza=demo --type=full backup
+docker exec -u 0 pg-patroni-1 ln -sf /usr/share/zoneinfo/Asia/Ho_Chi_Minh /etc/localtime 2>/dev/null || true
+docker exec -e TZ=Asia/Ho_Chi_Minh -e PGBACKREST_REPO1_STORAGE_VERIFY_TLS=n pg-patroni-1 pgbackrest --stanza=demo --type=full backup
 
 TOTAL_END=$(date +%s)
 echo "=========================================================="

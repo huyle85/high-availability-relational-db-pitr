@@ -68,8 +68,9 @@ done
 echo ""
 echo "Replica (cổng 5001) trả về: $REPLICA_COUNT bản ghi"
 
-echo "--- pgbackrest verify ---"
+echo "--- pgbackrest verify (Giờ Việt Nam) ---"
 LEADER=$(get_leader || echo "")
 if [ -n "$LEADER" ]; then
-  docker exec -e PGBACKREST_REPO1_STORAGE_VERIFY_TLS=n "$LEADER" pgbackrest --stanza=demo verify || true
+  docker exec -u 0 "$LEADER" ln -sf /usr/share/zoneinfo/Asia/Ho_Chi_Minh /etc/localtime 2>/dev/null || true
+  docker exec -e TZ=Asia/Ho_Chi_Minh -e PGBACKREST_REPO1_STORAGE_VERIFY_TLS=n "$LEADER" pgbackrest --stanza=demo verify || true
 fi

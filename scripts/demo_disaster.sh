@@ -18,7 +18,7 @@ echo "$BEFORE" > "$LOG_DIR/before.txt"
 echo "$BEFORE"
 
 echo "[3] Ghi mốc an toàn (restore point và thời gian Giờ VN)..."
-RESTORE_POINT="truoc_drop_$(date +%s)"
+RESTORE_POINT="truoc_drop_$(date '+%Y%m%d_%H%M%S')"
 run_sql 5000 "SELECT pg_create_restore_point('$RESTORE_POINT');" > /dev/null
 SAFE_TIME=$(run_sql 5000 "SELECT to_char(clock_timestamp() AT TIME ZONE 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD HH24:MI:SS.US+07');")
 echo "$RESTORE_POINT" > "$LOG_DIR/restore_point.txt"

@@ -11,14 +11,14 @@ CHECK_QUERY="SELECT count(*) || '|' || sum(balance) || '|' || md5(string_agg(own
 run_sql() {
   PORT="$1"
   QUERY="$2"
-  docker exec -i -e PGPASSWORD=postgrespassword pg-client \
+  docker exec -i -e TZ=Asia/Ho_Chi_Minh -e PGPASSWORD=postgrespassword pg-client \
     psql -h haproxy -p "$PORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -At -c "$QUERY"
 }
  
 run_sql_table() {
   PORT="$1"
   QUERY="$2"
-  docker exec -i -e PGPASSWORD=postgrespassword pg-client \
+  docker exec -i -e TZ=Asia/Ho_Chi_Minh -e PGPASSWORD=postgrespassword pg-client \
     psql -h haproxy -p "$PORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -c "$QUERY"
 }
  

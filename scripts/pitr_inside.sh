@@ -3,7 +3,8 @@ set -e
 mkdir -p /etc/pgbackrest/conf.d
 printf '[global]\nrepo1-storage-verify-tls=n\n' > /etc/pgbackrest/conf.d/tls.conf
 export PGBACKREST_REPO1_STORAGE_VERIFY_TLS=n
-export TZ='ICT-7'
+ln -sf /usr/share/zoneinfo/Asia/Ho_Chi_Minh /etc/localtime 2>/dev/null || true
+export TZ='Asia/Ho_Chi_Minh'
 MODE="$1"
 TARGET="$2"
 DATA=/var/lib/postgresql/data/patroni

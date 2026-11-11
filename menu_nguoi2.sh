@@ -63,10 +63,11 @@ while true; do
       ;;
     3)
       echo ""
-      echo ">>> [5.1] THONG TIN KHO SAO LUU PGBACKREST (pgbackrest info)"
+      echo ">>> [5.1] THONG TIN KHO SAO LUU PGBACKREST (pgbackrest info - GIO VIET NAM)"
       LEADER=$(get_leader || echo "")
       if [ -n "$LEADER" ]; then
-        docker exec -e PGBACKREST_REPO1_STORAGE_VERIFY_TLS=n "$LEADER" pgbackrest --stanza=demo info 2>/dev/null || echo "[THÔNG BÁO] Kho MinIO S3 chưa có Stanza hoặc chưa có bản Backup nào. Hãy chọn mục [2] để tạo!"
+        docker exec -u 0 "$LEADER" ln -sf /usr/share/zoneinfo/Asia/Ho_Chi_Minh /etc/localtime 2>/dev/null || true
+        docker exec -e TZ=Asia/Ho_Chi_Minh -e PGBACKREST_REPO1_STORAGE_VERIFY_TLS=n "$LEADER" pgbackrest --stanza=demo info 2>/dev/null || echo "[THÔNG BÁO] Kho MinIO S3 chưa có Stanza hoặc chưa có bản Backup nào. Hãy chọn mục [2] để tạo!"
       else
         echo "[LỖI] Chưa tìm thấy node Leader. Hãy kiểm tra trạng thái cụm bằng mục [9]!"
       fi
