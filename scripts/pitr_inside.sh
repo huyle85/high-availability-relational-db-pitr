@@ -1,5 +1,8 @@
 #!/bin/bash
 set -e
+mkdir -p /etc/pgbackrest/conf.d
+printf '[global]\nrepo1-storage-verify-tls=n\n' > /etc/pgbackrest/conf.d/tls.conf
+export PGBACKREST_REPO1_STORAGE_VERIFY_TLS=n
 MODE="$1"
 TARGET="$2"
 DATA=/var/lib/postgresql/data/patroni

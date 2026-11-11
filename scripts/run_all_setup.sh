@@ -30,6 +30,9 @@ echo "    -> Patroni đã bầu Leader thành công!"
 echo "Trạng thái cụm Patroni:"
 docker exec pg-patroni-1 patronictl -c /tmp/patroni.yml list 2>/dev/null || docker exec pg-patroni-2 patronictl -c /tmp/patroni.yml list
 
+docker exec pg-patroni-1 bash -c "mkdir -p /etc/pgbackrest/conf.d && printf '[global]\nrepo1-storage-verify-tls=n\n' > /etc/pgbackrest/conf.d/tls.conf" 2>/dev/null || true
+docker exec pg-patroni-2 bash -c "mkdir -p /etc/pgbackrest/conf.d && printf '[global]\nrepo1-storage-verify-tls=n\n' > /etc/pgbackrest/conf.d/tls.conf" 2>/dev/null || true
+
 echo "=== [4/4] KHỞI TẠO STANZA VÀ FULL BACKUP ĐẦU TIÊN ==="
 bash scripts/init_backup.sh
 

@@ -53,6 +53,8 @@ while true; do
     2)
       echo ""
       echo ">>> [5.1] KHOI TAO STANZA VA FULL BACKUP (scripts/init_backup.sh)"
+      docker exec pg-patroni-1 bash -c "mkdir -p /etc/pgbackrest/conf.d && printf '[global]\nrepo1-storage-verify-tls=n\n' > /etc/pgbackrest/conf.d/tls.conf" 2>/dev/null || true
+      docker exec pg-patroni-2 bash -c "mkdir -p /etc/pgbackrest/conf.d && printf '[global]\nrepo1-storage-verify-tls=n\n' > /etc/pgbackrest/conf.d/tls.conf" 2>/dev/null || true
       bash scripts/init_backup.sh
       pause_screen
       ;;
@@ -61,7 +63,7 @@ while true; do
       echo ">>> [5.1] THONG TIN KHO SAO LUU PGBACKREST (pgbackrest info)"
       LEADER=$(get_leader || echo "")
       if [ -n "$LEADER" ]; then
-        docker exec "$LEADER" pgbackrest --stanza=demo info
+        docker exec -e PGBACKREST_REPO1_STORAGE_VERIFY_TLS=n "$LEADER" pgbackrest --stanza=demo info
       else
         echo "[LỖI] Chưa tìm thấy node Leader. Hãy kiểm tra trạng thái cụm bằng mục [9]!"
       fi

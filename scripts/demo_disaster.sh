@@ -36,6 +36,8 @@ REPLICA_AFTER=$(run_sql 5001 "SELECT count(*) FROM bank_accounts;" 2>&1 || true)
 echo "    -> Replica (cổng 5001) sau khi DROP: $REPLICA_AFTER"
 
 echo "[5] Ép đẩy WAL chứa lệnh DROP lên MinIO S3 và chờ xác nhận..."
+docker exec pg-patroni-1 bash -c "mkdir -p /etc/pgbackrest/conf.d && printf '[global]\nrepo1-storage-verify-tls=n\n' > /etc/pgbackrest/conf.d/tls.conf" 2>/dev/null || true
+docker exec pg-patroni-2 bash -c "mkdir -p /etc/pgbackrest/conf.d && printf '[global]\nrepo1-storage-verify-tls=n\n' > /etc/pgbackrest/conf.d/tls.conf" 2>/dev/null || true
 WAL_FILE=$(run_sql 5000 "SELECT pg_walfile_name(pg_current_wal_lsn());")
 run_sql 5000 "SELECT pg_switch_wal();" > /dev/null
 echo "    -> File WAL cần đẩy: $WAL_FILE"

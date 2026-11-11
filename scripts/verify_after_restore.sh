@@ -70,5 +70,5 @@ echo "Replica (cổng 5001) trả về: $REPLICA_COUNT bản ghi"
 echo "--- pgbackrest verify ---"
 LEADER=$(get_leader || echo "")
 if [ -n "$LEADER" ]; then
-  docker exec "$LEADER" pgbackrest --stanza=demo verify || true
+  docker exec -e PGBACKREST_REPO1_STORAGE_VERIFY_TLS=n "$LEADER" pgbackrest --stanza=demo verify || true
 fi
