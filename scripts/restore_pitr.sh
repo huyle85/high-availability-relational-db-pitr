@@ -38,7 +38,7 @@ docker compose up -d --wait etcd
 echo "[3/6] Restore bằng pgBackRest vào volume node 1 (Patroni đang tắt)..."
 RESTORE_START=$(date +%s)
 docker compose run --rm --no-deps -T --entrypoint bash pg-patroni-1 \
-  /scripts/pitr_inside.sh "$MODE" "$TARGET" | tee "$LOG_DIR/pitr_restore.log"
+  -c "tr -d '\r' < /scripts/pitr_inside.sh | bash -s -- '$MODE' '$TARGET'" | tee "$LOG_DIR/pitr_restore.log"
 RESTORE_END=$(date +%s)
 
 echo "[4/6] Khởi động node 1, Patroni nhận dữ liệu đã PITR làm Leader..."

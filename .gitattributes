@@ -1,0 +1,7 @@
+* text=auto
+*.sh text eol=lf
+*.tpl text eol=lf
+*.cfg text eol=lf
+*.conf text eol=lf
+Dockerfile* text eol=lf
+*.bat text eol=crlf
