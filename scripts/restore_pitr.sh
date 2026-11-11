@@ -4,6 +4,7 @@ set -o pipefail
 export MSYS_NO_PATHCONV=1
 export COMPOSE_PROFILES=backup
 export BACKUP_MODE=on
+export TZ='ICT-7'
 source "$(dirname "$0")/common.sh"
 cd "$PROJECT_DIR"
 
@@ -21,7 +22,7 @@ if [ -z "$MODE" ]; then
 fi
 if [ "$MODE" != "name" ] && [ "$MODE" != "time" ]; then
   echo "Cách dùng: ./scripts/restore_pitr.sh                      (dùng restore point vừa ghi)"
-  echo "           ./scripts/restore_pitr.sh time '2026-11-11 08:30:15.123456+00'"
+  echo "           ./scripts/restore_pitr.sh time '2026-11-11 14:30:15.123456+07'"
   exit 1
 fi
 

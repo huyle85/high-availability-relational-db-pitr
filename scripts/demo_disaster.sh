@@ -2,9 +2,12 @@
 set -e
 export MSYS_NO_PATHCONV=1
 export COMPOSE_PROFILES=backup
+export TZ='ICT-7'
 source "$(dirname "$0")/common.sh"
 
 echo "[1] Tạo bảng bank_accounts và chèn dữ liệu..."
+run_sql 5000 "ALTER SYSTEM SET timezone = 'Asia/Ho_Chi_Minh';" > /dev/null 2>&1 || true
+run_sql 5000 "SELECT pg_reload_conf();" > /dev/null 2>&1 || true
 run_sql 5000 "DROP TABLE IF EXISTS bank_accounts; CREATE TABLE bank_accounts (account_id SERIAL PRIMARY KEY, owner_name VARCHAR(100), balance NUMERIC(15,2), updated_at TIMESTAMPTZ DEFAULT clock_timestamp());" > /dev/null
 run_sql 5000 "INSERT INTO bank_accounts (owner_name, balance) VALUES ('Le Van Huy', 50000000.00), ('Nguyen Van A', 120000000.00), ('Tran Thi B', 85000000.00);" > /dev/null
 run_sql_table 5000 "SELECT account_id, owner_name, balance FROM bank_accounts ORDER BY account_id;"
@@ -14,22 +17,23 @@ BEFORE=$(run_sql 5000 "$CHECK_QUERY")
 echo "$BEFORE" > "$LOG_DIR/before.txt"
 echo "$BEFORE"
 
-echo "[3] Ghi mốc an toàn (restore point và thời gian)..."
+echo "[3] Ghi mốc an toàn (restore point và thời gian Giờ VN)..."
 RESTORE_POINT="truoc_drop_$(date +%s)"
 run_sql 5000 "SELECT pg_create_restore_point('$RESTORE_POINT');" > /dev/null
-SAFE_TIME=$(run_sql 5000 "SELECT clock_timestamp();")
+SAFE_TIME=$(run_sql 5000 "SELECT to_char(clock_timestamp() AT TIME ZONE 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD HH24:MI:SS.US+07');")
 echo "$RESTORE_POINT" > "$LOG_DIR/restore_point.txt"
 echo "$SAFE_TIME" > "$LOG_DIR/safe_time.txt"
-echo "    -> Restore point: $RESTORE_POINT"
-echo "    -> Mốc thời gian: $SAFE_TIME"
+echo "    -> Restore point                  : $RESTORE_POINT"
+echo "    -> Mốc thời gian an toàn (Giờ VN) : $SAFE_TIME"
 sleep 2
 
 REPLICA_BEFORE=$(run_sql 5001 "SELECT count(*) FROM bank_accounts;" 2>&1 || true)
-echo "    -> Replica (cổng 5001) đang thấy: $REPLICA_BEFORE bản ghi"
+echo "    -> Replica (cổng 5001) đang thấy  : $REPLICA_BEFORE bản ghi"
 
 echo "[4] MÔ PHỎNG LỖI THAO TÁC: xóa nhầm bảng (DROP TABLE)..."
 run_sql 5000 "DROP TABLE bank_accounts;"
-echo "    -> Đã DROP TABLE lúc: $(date -Is)"
+DROP_TIME=$(date '+%Y-%m-%d %H:%M:%S (%Z)')
+echo "    -> Đã DROP TABLE lúc (Giờ VN)     : $DROP_TIME"
 sleep 2
 
 REPLICA_AFTER=$(run_sql 5001 "SELECT count(*) FROM bank_accounts;" 2>&1 || true)

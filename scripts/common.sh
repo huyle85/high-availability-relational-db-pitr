@@ -1,5 +1,6 @@
 #!/bin/bash
 export MSYS_NO_PATHCONV=1
+export TZ='ICT-7'
  
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOG_DIR="$PROJECT_DIR/scripts/logs"

@@ -2,6 +2,7 @@
 export MSYS_NO_PATHCONV=1
 export COMPOSE_PROFILES=backup
 export BACKUP_MODE=on
+export TZ='ICT-7'
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
 source "$PROJECT_DIR/scripts/common.sh"
@@ -19,11 +20,13 @@ pause_screen() {
 while true; do
   clear 2>/dev/null || printf "\033c"
   LEADER_INFO=$(get_current_leader)
+  VN_TIME=$(date '+%Y-%m-%d %H:%M:%S (%Z)')
 
   echo "========================================================================================"
   echo "   DEMO DE TAI 13: CSDL QUAN HE SAN SANG CAO (HA) & SAO LUU PHUC HOI PITR"
   echo "   PHAN DANH CHO: NGUOI 2 (MAY B) - SAO LUU VA PHUC HOI THAM HOA PITR"
   echo "   Leader hien tai: $LEADER_INFO   |   HAProxy: 5000 (Ghi) / 5001 (Doc)"
+  echo "   Gio Viet Nam   : $VN_TIME"
   echo "========================================================================================"
   echo "[ QUY TRINH SAO LUU VA PHUC HOI THAM HOA PITR (MUC 5) ]"
   echo "  [ 1] 5.1 Tao chung chi tu ky co SAN cho MinIO S3 (scripts/gen_certs.sh)"
@@ -103,12 +106,12 @@ while true; do
       ;;
     8)
       echo ""
-      echo ">>> [5.1] PHUC HOI PITR THEO MOC THOI GIAN TIMESTAMP"
+      echo ">>> [5.1] PHUC HOI PITR THEO MOC THOI GIAN TIMESTAMP (GIO VIET NAM)"
       DEFAULT_TS=""
       if [ -f "$LOG_DIR/safe_time.txt" ]; then
         DEFAULT_TS=$(cat "$LOG_DIR/safe_time.txt")
       fi
-      echo "Moc thoi gian an toan da luu: $DEFAULT_TS"
+      echo "Moc thoi gian an toan da luu (Gio VN): $DEFAULT_TS"
       read -rp "Nhap timestamp [Bam Enter de dung '$DEFAULT_TS']: " USER_TS
       USER_TS=$(echo "$USER_TS" | tr -d '\r\n')
       FINAL_TS="${USER_TS:-$DEFAULT_TS}"

@@ -3,6 +3,7 @@ set -e
 export MSYS_NO_PATHCONV=1
 export COMPOSE_PROFILES=backup
 export BACKUP_MODE=on
+export TZ='ICT-7'
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_DIR"
 
@@ -32,6 +33,9 @@ docker exec pg-patroni-1 patronictl -c /tmp/patroni.yml list 2>/dev/null || dock
 
 docker exec pg-patroni-1 bash -c "mkdir -p /etc/pgbackrest/conf.d && printf '[global]\nrepo1-storage-verify-tls=n\n' > /etc/pgbackrest/conf.d/tls.conf" 2>/dev/null || true
 docker exec pg-patroni-2 bash -c "mkdir -p /etc/pgbackrest/conf.d && printf '[global]\nrepo1-storage-verify-tls=n\n' > /etc/pgbackrest/conf.d/tls.conf" 2>/dev/null || true
+
+docker exec -e PGPASSWORD=postgrespassword pg-client psql -h haproxy -p 5000 -U postgres -d postgres -c "ALTER SYSTEM SET timezone = 'Asia/Ho_Chi_Minh';" >/dev/null 2>&1 || true
+docker exec -e PGPASSWORD=postgrespassword pg-client psql -h haproxy -p 5000 -U postgres -d postgres -c "SELECT pg_reload_conf();" >/dev/null 2>&1 || true
 
 echo "=== [4/4] KHỞI TẠO STANZA VÀ FULL BACKUP ĐẦU TIÊN ==="
 bash scripts/init_backup.sh

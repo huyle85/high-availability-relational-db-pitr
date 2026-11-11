@@ -1,5 +1,6 @@
 #!/bin/bash
 export MSYS_NO_PATHCONV=1
+export TZ='ICT-7'
 source "$(dirname "$0")/common.sh"
 
 echo "Chờ cổng ghi 5000 sẵn sàng..."
