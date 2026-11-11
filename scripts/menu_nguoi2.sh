@@ -38,13 +38,12 @@ while true; do
   echo "  [ 7] 5.1 Kiem tra toan ven sau phuc hoi (scripts/verify_after_restore.sh)"
   echo "  [ 8] 5.1 Phuc hoi PITR theo moc thoi gian Timestamp (restore_pitr.sh time)"
   echo ""
-  echo "[ TIEN ICH QUAN TRI & HO TRO ]"
+  echo "[ TIEN ICH QUAN TRI ]"
   echo "  [ 9] Khoi dong cum & Kiem tra trang thai (patronictl list)"
   echo "  [10] Reset sach se toan bo volumes/certs & Khoi tao lai tu dau (clean_all.sh)"
-  echo "  [11] Mo Cam nang thuyet trinh & Huong dan Demo (HUONG_DAN_THUYET_TRINH_DEMO.html)"
   echo "  [ 0] Thoat chuong trinh"
   echo "========================================================================================"
-  read -rp ">> Nhap so lua chon [0 - 11]: " RAW_CHOICE
+  read -rp ">> Nhap so lua chon [0 - 10]: " RAW_CHOICE
   CHOICE=$(echo "$RAW_CHOICE" | tr -d '\r\n[:space:]')
 
   case "$CHOICE" in
@@ -67,7 +66,7 @@ while true; do
       echo ">>> [5.1] THONG TIN KHO SAO LUU PGBACKREST (pgbackrest info)"
       LEADER=$(get_leader || echo "")
       if [ -n "$LEADER" ]; then
-        docker exec -e PGBACKREST_REPO1_STORAGE_VERIFY_TLS=n "$LEADER" pgbackrest --stanza=demo info
+        docker exec -e PGBACKREST_REPO1_STORAGE_VERIFY_TLS=n "$LEADER" pgbackrest --stanza=demo info 2>/dev/null || echo "[THÔNG BÁO] Kho MinIO S3 chưa có Stanza hoặc chưa có bản Backup nào. Hãy chọn mục [2] để tạo!"
       else
         echo "[LỖI] Chưa tìm thấy node Leader. Hãy kiểm tra trạng thái cụm bằng mục [9]!"
       fi
@@ -141,36 +140,23 @@ while true; do
       echo "======================================================================"
       echo "[CANH BAO QUAN TRONG] LUA CHON RESET SACH SE TOAN BO MOI TRUONG"
       echo "Thao tac nay se:"
-      echo "  1. Xoa toan bo container va named volumes (etcd, pg1_data, pg2_data, minio_data)"
-      echo "  2. Xoa toan bo chung chi trong certs/ va lich su trong scripts/logs/"
-      echo "  3. Khoi tao cum moi hoan toan tu dau va tao lai Full Backup"
+      echo "  1. Dừng và xóa toàn bộ container & named volumes (pg1, pg2, minio, etcd)"
+      echo "  2. Xóa sạch toàn bộ dữ liệu backup và archive WAL trên MinIO S3"
+      echo "  3. Sinh lại chứng chỉ TLS và khởi động cụm sạch sẽ"
+      echo "  --> KHO MINIO S3 SẼ HOÀN TOÀN TRỐNG (0 backup) ĐỂ BẠN TỰ DO DEMO MỤC [2]!"
       echo "======================================================================"
       read -rp "Ban co CHAC CHAN muon reset sach se khong? [y/N]: " RAW_CONFIRM
       CONFIRM=$(echo "$RAW_CONFIRM" | tr -d '\r\n[:space:]')
       if [[ "$CONFIRM" =~ ^[yY]|co|yes$ ]]; then
         echo ""
-        echo ">>> [1/2] Dang tien hanh don dep toan bo..."
+        echo ">>> [1/2] Dang tien hanh don dep toan bo volumes va certs..."
         bash scripts/clean_all.sh
         echo ""
-        echo ">>> [2/2] Dang khoi tao lai toan bo moi truong tu dau..."
+        echo ">>> [2/2] Dang khoi tao cum sach se tu dau (chua co backup)..."
         bash scripts/run_all_setup.sh
       else
         echo "-> Da HUY thao tac reset. Du lieu giu nguyen!"
       fi
-      pause_screen
-      ;;
-    11)
-      echo ""
-      echo ">>> DANG MO CAM NANG THUYET TRINH TRONG TRINH DUYET..."
-      GUIDE_FILE="$PROJECT_DIR/HUONG_DAN_THUYET_TRINH_DEMO.html"
-      if command -v start >/dev/null 2>&1; then
-        start "$GUIDE_FILE" 2>/dev/null || true
-      elif command -v cmd.exe >/dev/null 2>&1; then
-        cmd.exe /c start "" "$GUIDE_FILE" 2>/dev/null || true
-      elif command -v xdg-open >/dev/null 2>&1; then
-        xdg-open "$GUIDE_FILE" 2>/dev/null || true
-      fi
-      echo "-> Da mo file: $GUIDE_FILE"
       pause_screen
       ;;
     0)
@@ -180,7 +166,7 @@ while true; do
       ;;
     *)
       echo ""
-      echo "[LỖI] Lua chon khong hop le: '$RAW_CHOICE'. Vui long nhap so tu 0 den 11."
+      echo "[LỖI] Lua chon khong hop le: '$RAW_CHOICE'. Vui long nhap so tu 0 den 10."
       pause_screen
       ;;
   esac
