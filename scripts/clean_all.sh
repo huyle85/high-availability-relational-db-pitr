@@ -1,7 +1,9 @@
 #!/bin/bash
+export MSYS_NO_PATHCONV=1
+export COMPOSE_PROFILES=backup
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_DIR"
- 
+
 echo "=== DỪNG VÀ XÓA TOÀN BỘ CỤM CONTAINER & NAMED VOLUMES ==="
 docker compose down -v --remove-orphans
 rm -rf certs/*.key certs/*.crt scripts/logs/*
