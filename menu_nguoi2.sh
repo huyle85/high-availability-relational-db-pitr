@@ -38,12 +38,13 @@ while true; do
   echo "  [ 7] 5.1 Kiem tra toan ven sau phuc hoi (scripts/verify_after_restore.sh)"
   echo "  [ 8] 5.1 Phuc hoi PITR theo moc thoi gian Timestamp (restore_pitr.sh time)"
   echo ""
-  echo "[ TIEN ICH QUAN TRI ]"
+  echo "[ TIEN ICH QUAN TRI & HO TRO ]"
   echo "  [ 9] Khoi dong cum & Kiem tra trang thai (patronictl list)"
   echo "  [10] Reset sach se toan bo volumes/certs & Khoi tao lai tu dau (clean_all.sh)"
+  echo "  [11] Mo Cam nang thuyet trinh & Huong dan Demo (HUONG_DAN_THUYET_TRINH_DEMO.html)"
   echo "  [ 0] Thoat chuong trinh"
   echo "========================================================================================"
-  read -rp ">> Nhap so lua chon [0 - 10]: " RAW_CHOICE
+  read -rp ">> Nhap so lua chon [0 - 11]: " RAW_CHOICE
   CHOICE=$(echo "$RAW_CHOICE" | tr -d '\r\n[:space:]')
 
   case "$CHOICE" in
@@ -158,6 +159,20 @@ while true; do
       fi
       pause_screen
       ;;
+    11)
+      echo ""
+      echo ">>> DANG MO CAM NANG THUYET TRINH TRONG TRINH DUYET..."
+      GUIDE_FILE="$PROJECT_DIR/HUONG_DAN_THUYET_TRINH_DEMO.html"
+      if command -v start >/dev/null 2>&1; then
+        start "$GUIDE_FILE" 2>/dev/null || true
+      elif command -v cmd.exe >/dev/null 2>&1; then
+        cmd.exe /c start "" "$GUIDE_FILE" 2>/dev/null || true
+      elif command -v xdg-open >/dev/null 2>&1; then
+        xdg-open "$GUIDE_FILE" 2>/dev/null || true
+      fi
+      echo "-> Da mo file: $GUIDE_FILE"
+      pause_screen
+      ;;
     0)
       echo ""
       echo "Tam biet!"
@@ -165,7 +180,7 @@ while true; do
       ;;
     *)
       echo ""
-      echo "[LỖI] Lua chon khong hop le: '$RAW_CHOICE'. Vui long nhap so tu 0 den 10."
+      echo "[LỖI] Lua chon khong hop le: '$RAW_CHOICE'. Vui long nhap so tu 0 den 11."
       pause_screen
       ;;
   esac
