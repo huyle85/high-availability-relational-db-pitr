@@ -1,0 +1,124 @@
+name: patroni-ha-pitr
+ 
+networks:
+  ha-net:
+    driver: bridge
+ 
+volumes:
+  pg1_data:
+    name: patroni_pg1_data
+  pg2_data:
+    name: patroni_pg2_data
+  minio_data:
+    name: patroni_minio_data
+ 
+services:
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.9
+    container_name: etcd
+    environment:
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_ADVERTISE_CLIENT_URLS: http://etcd:2379
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    networks:
+      - ha-net
+ 
+  minio:
+    image: minio/minio:RELEASE.2024-01-18T22-51-28Z
+    container_name: minio
+    profiles: ["backup"]
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001" --certs-dir /certs
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+      - ./certs:/certs:ro
+    networks:
+      - ha-net
+ 
+  minio-init:
+    image: minio/mc:latest
+    container_name: minio-init
+    profiles: ["backup"]
+    depends_on:
+      - minio
+    restart: "no"
+    entrypoint: >
+      /bin/sh -c "
+      until mc --insecure alias set local https://minio:9000 minioadmin minioadmin; do sleep 2; done;
+      mc --insecure mb --ignore-existing local/pg-backup;
+      exit 0
+      "
+    networks:
+      - ha-net
+ 
+  pg-patroni-1:
+    image: patroni-pg16:latest
+    build:
+      context: .
+    container_name: pg-patroni-1
+    hostname: pg-patroni-1
+    environment:
+      PATRONI_NAME: pg-patroni-1
+      BACKUP_MODE: ${BACKUP_MODE:-off}
+    volumes:
+      - pg1_data:/var/lib/postgresql/data
+      - ./certs:/certs:ro
+      - ./scripts:/scripts:ro
+    depends_on:
+      etcd:
+        condition: service_healthy
+    networks:
+      - ha-net
+ 
+  pg-patroni-2:
+    image: patroni-pg16:latest
+    build:
+      context: .
+    container_name: pg-patroni-2
+    hostname: pg-patroni-2
+    environment:
+      PATRONI_NAME: pg-patroni-2
+      BACKUP_MODE: ${BACKUP_MODE:-off}
+    volumes:
+      - pg2_data:/var/lib/postgresql/data
+      - ./certs:/certs:ro
+      - ./scripts:/scripts:ro
+    depends_on:
+      etcd:
+        condition: service_healthy
+    networks:
+      - ha-net
+ 
+  haproxy:
+    image: haproxy:2.8-alpine
+    container_name: haproxy
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+      - "7000:7000"
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    depends_on:
+      - pg-patroni-1
+      - pg-patroni-2
+    networks:
+      - ha-net
+ 
+  pg-client:
+    image: postgres:16-bookworm
+    container_name: pg-client
+    command: ["sleep", "infinity"]
+    working_dir: /scripts
+    volumes:
+      - ./scripts:/scripts
+    networks:
+      - ha-net
