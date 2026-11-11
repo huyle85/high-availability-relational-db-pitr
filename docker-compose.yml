@@ -28,7 +28,9 @@ services:
       - ha-net
  
   minio:
-    image: minio/minio:RELEASE.2024-01-18T22-51-28Z
+    build:
+      context: .
+      dockerfile: Dockerfile.minio
     container_name: minio
     profiles: ["backup"]
     environment:
@@ -43,19 +45,24 @@ services:
       - ./certs:/certs:ro
     networks:
       - ha-net
- 
+
   minio-init:
-    image: minio/mc:latest
+    image: amazon/aws-cli:latest
     container_name: minio-init
     profiles: ["backup"]
     depends_on:
       - minio
     restart: "no"
+    environment:
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_DEFAULT_REGION: us-east-1
     entrypoint: >
       /bin/sh -c "
-      until mc --insecure alias set local https://minio:9000 minioadmin minioadmin; do sleep 2; done;
-      mc --insecure mb --ignore-existing local/pg-backup;
-      exit 0
+      until aws --no-verify-ssl --endpoint-url https://minio:9000 s3 mb s3://pg-backup 2>/dev/null; do
+        sleep 2;
+      done;
+      exit 0;
       "
     networks:
       - ha-net
